@@ -1,0 +1,454 @@
+---
+title : Assignment 0
+author : Guolun Li and 10014118215
+options:
+  eval: true #Set this to true if you'd like to evaluate the code in this document
+---
+
+The primary goal of this assignment is to allow you to practice and assess your prerequisite knowledge which will be relied on throughout this course.
+The secondary objective is to familiarize you with the tools and best practices, including:
+* Mathematical typesetting (LaTeX)
+* Version control (git and github)
+* Unit testing
+* Setting random seeds for reproducibility
+* Automatic differentiation
+
+The starter code and examples below are in the Julia programming language. You may also submit solutions using Python, if that is more familiar for you.
+
+You are expected to submit a typeset (LaTeX) **write-up** (pdf) that contains everything that will be assessed. In particular, this means your writeup must include
+* Important source code. If a question asks you to implement a piece of code, include it in the writeup. Make this clear for the marker, don't just append your entire source code into the pdf.
+* Outputs from the code. If a question asks you to report some values, those must be included in the writeup.
+* Plots must be included in the writeup, and be clearly labelled (title, axes, legend, caption).
+* Unit tests. For some questions where you implement a piece of code, you will be expected to test the correctness of that code. Include your unit tests in your writeup.
+
+You will also be expected to include **all source code** along with your writeup.
+However, graders will not be expected to run your source code.
+
+Questions where you are asked to run unit tests may require you to produce the unit test. For example, in question 2.1 you will manually write the derivates for various functions.
+In question 2.2 you will useds Automatic Differentiation to compute derivatives of those same functions.
+You will test the correctness of these answers by producing unit tests for each question.
+This is a very useful practice because it's possible that either your code or your math may be incorrect, but it's much less likely (still possible) that both are incorrect for the same reasons!
+
+If you are using the Julia starter code I have included all the packages you will need in the repo.
+You can activate those packages in the command-line by starting the julia session with `julia --project`
+or if you are already in the REPL (like in Atom) by opening the package manager (by typing `[` into the REPL) and activating the project `[ activate .` (the period is part of the command).
+If you've done this correctly, when you open the Package manager (type `]`) you should see `(assignment_0) pkg>`.
+
+This document is as example of [literate programming](https://en.wikipedia.org/wiki/Literate_programming), which [weave](http://weavejl.mpastell.com/stable/)s together text (markdown), math (LaTeX), and code (julia) from a single document.
+The source for this write-up can be found in `A0.jmd` and can be produced using `make_pdf.jl`.
+You may use this to produce your own writeups, but this is not required.
+Feel free to use LaTeX as normal, and include the relevant source code, outputs, and plots.
+
+```julia
+# We will use unit testing to make sure our solutions are what we expect
+# This shows how to import the Test package, which provides convenient functions like @test
+using Test
+# Setting a Random Seed is good practice so our code is consistent between runs
+using Random # Import Random Package
+Random.seed!(414); #Set Random Seed
+# ; suppresses output, makes the writeup slightly cleaner.
+# ! is a julia convention to indicate the function mutates a global state.
+```
+
+# Probability
+
+## Variance and Covariance
+Let $X$ and $Y$ be two continuous, independent random variables.
+
+1. [3pts] Starting from the definition of independence, show that the independence of $X$ and $Y$ implies that their covariance is $0$.
+
+Answer: Since $X$ and $Y$ are continuous and independent, we have: $f_{X,Y}(x,y) = f_{X}(x)f_{Y}(y) \forall
+x,y$.
+$$
+\begin{align*}
+cov(X,Y) &= E((X-E(X))(Y-E(Y))).\\
+&= E(XY-E(X)Y-XE(Y)+E(X)E(Y)) \\
+&= E(XY)-E(X)E(Y)-E(X)E(Y)+E(X)E(Y)\\
+&= E(XY)-E(X)E(Y)\\
+&= \int_{-∞}^{+∞}\int_{-∞}^{+∞} xyf_{X,Y}(x,y)dxdy -\int_{-\infty}^{+\infty}xf_{X}(x)dx\int_{-\infty}^{+\infty}yf_{Y}(y)dy\\
+&=\int_{-∞}^{+∞}\int_{-∞}^{+∞} xy(f_{X,Y}(x,y)-f_{X}(x)f_{Y}(y))dxdy \hspace{15mm}\text{assuming all integrals exist}\\
+&= 0 \hspace{80mm}\text{because $f_{X,Y}(x,y) = f_{X}(x)f_{Y}(y) \forall x,y$.}
+\end{align*}
+$$
+2. [3pts] For a scalar constant $a$, show the following two properties starting from the definition of expectation:
+
+$$
+\begin{align}
+\mathbb{E}(X+aY) &= \mathbb{E}(X) + a\mathbb{E}(Y)\\
+\text{var}(X + aY) &= \text{var}(X) + a^2 \text{var}(Y)
+\end{align}
+$$
+
+Answer:
+$$
+\begin{align}
+E(X+aY)&=\int_{-∞}^{+∞}\int_{-∞}^{+∞} (x+ay)f_{X,Y}(x,y)dxdy\\
+&=\int_{-∞}^{+∞}\int_{-∞}^{+∞} xf_{X,Y}(x,y)dxdy + a\int_{-∞}^{+∞}\int_{-∞}^{+∞}yf_{X,Y}(x,y)dxdy\\
+&=\int_{-∞}^{+∞} xdx\int_{-∞}^{+∞}f_{X,Y}(x,y)dy + a\int_{-∞}^{+∞}ydy \int_{-∞}^{+∞}f_{X,Y}(x,y)dx\\
+&=\int_{-∞}^{+∞} xdxf_{X}(x) + a\int_{-∞}^{+∞}ydy f_{Y}(y)\\
+&=E(X)+aE(Y)
+\end{align}
+Linearity of expectation is proven above which will be used in the following proof.
+\begin{align}
+var(X+aY)&=E((X+aY-E(X+aY))^2)\\
+&=E((X+aY-E(X+aY))^2)\\
+&=E((X-E(X)+a(Y-E(Y)))^2)\\
+&=E((X-E(X))^2+a^2(Y-E(Y))^2+2a(X-E(X))(Y-E(Y)))\\
+&=E((X-E(X))^2)+a^2E((Y-E(Y))^2)+2aE((X-E(X))(Y-E(Y)))\\
+&=var(X)+a^2var(Y)+2acov(X,Y)\\
+&=var(X)+a^2var(Y)\hspace{15mm}\text{because X and Y are independent}
+\end{align}
+$$
+## 1D Gaussian Densities
+
+1. [1pts] Can a probability density function (pdf) ever take values greater than $1$?
+
+  Answer: Yes. Consider $$X∼Uniform(0,0.5)$$, then pdf of $X$ is 2 for any $x$ between 0 and 0.5.
+
+2.  Let $X$ be a univariate random variable distributed according to a Gaussian distribution with mean $\mu$ and variance $\sigma^2$.
+
+* [[1pts]] Write the expression for the pdf:
+
+  Answer: $$f_{X}(x) = \frac{1}{\sqrt{2πσ^2}}e^{-\frac{1}{2\sigma^2}(x-μ)^2}$$.
+
+* [[2pts]] Write the code for the function that computes the pdf at $x$ with default values $\mu=0$ and $\sigma = \sqrt{0.01}$:
+
+    Answer:
+
+```julia
+function gaussian_pdf(x; mean=0., variance=0.01)
+  return 1/(sqrt(2*pi*variance))*exp(-1/(2*variance)*(x-mean)^2)
+end
+```
+
+Test your implementation against a standard implementation from a library:
+```julia
+# Test answers
+using Test
+using Distributions: pdf, Normal # Note Normal uses N(mean, stddev) for parameters
+@testset "Implementation of Gaussian pdf" begin
+  x = randn()
+  @test gaussian_pdf(x) ≈ pdf.(Normal(0.,sqrt(0.01)),x)
+  @test isapprox(gaussian_pdf(x,mean = 10., variance = 1),pdf.(Normal(10.,sqrt(1)),x))
+end;
+```
+
+3. [1pts] What is the value of the pdf at $x=0$? What is probability that $x=0$ (hint: is this the same as the pdf? Briefly explain your answer.)
+
+    Answer：
+    $$f_{X}(0) = \frac{1}{\sqrt{2πσ^2}}e^{-\frac{1}{2σ^2}μ^2}$$ whereas $$P(x=0)=0$$.
+    These two are not the same because area under pdf curve represents probability, the function value only represnts density.
+
+4. A Gaussian with mean $\mu$ and variance $\sigma^2$ can be written as a simple transformation of the standard Gaussian with mean $0.$ and variance $1.$.
+
+  * [[1pts]] Write the transformation that takes $x \sim \mathcal{N}(0.,1.)$ to $z \sim \mathcal{N}(\mu, \sigma^2)$:
+
+    Answer:
+    $$z = \mu + \sigma x$$.
+
+
+  * [[2pts]] Write a code implementation to produce $n$ independent samples from $\mathcal{N}(\mu, \sigma^2)$ by transforming $n$ samples from $\mathcal{N}(0.,1.)$.
+
+    Answer:
+
+```julia
+function sample_gaussian(n; mean=0., variance=0.01)
+  # n samples from standard gaussian
+  x = randn(n)
+
+  # TODO: transform x to sample z from N(mean,variance)
+  z = mean .+ sqrt(variance) .* x
+  return z
+end;
+```
+
+[2pts] Test your implementation by computing statistics on the samples:
+
+```julia
+using Statistics: mean, var
+@testset "Numerically testing Gaussian Sample Statistics" begin
+
+  #TODO: Sample 100000 samples with your function and use mean and var to
+  # compute statistics.
+  # tests should compare statistics against the true mean and variance from arguments.
+  # hint: use isapprox with keyword argument atol=1e-2
+  x = sample_gaussian(100000, mean = 4.9, variance = 2.1)
+  @test isapprox(mean(x), 4.9, atol = 1e-2)
+  @test isapprox(var(x), 2.1, atol = 1e-2)
+end;
+```
+
+5. [3pts] Sample $10000$ samples from a Gaussian with mean $10.$ an variance $2$. Plot the **normalized** `histogram` of these samples. On the same axes `plot!` the pdf of this distribution.
+Confirm that the histogram approximates the pdf.
+(Note: with `Plots.jl` the function `plot!` will add to the existing axes.)
+
+```julia
+using Plots,Distributions
+x = sample_gaussian(10000,mean = 10., variance = 2.)
+histogram(x, normalize = true, label = "histogram")
+seq = 5:0.01:+15
+plot!(seq, gaussian_pdf.(seq; mean = 10., variance = 2.), label = "density")
+savefig("normal_plot.pdf")
+```
+As you can see, the histogram is a well approximation for the pdf.
+(See last page for the plot)
+# Calculus
+
+## Manual Differentiation
+
+Let $x,y \in \mathbb{R}^m$, $A \in \mathbb{R}^{m \times n}$, and square matrix $B \in \mathbb{R}^{m \times m}$.
+And where $x'$ is the transpose of $x$.
+Answer the following questions in vector notation.
+
+1. [1pts] What is the gradient of $x'y$ with respect to $x$?
+
+Answer:
+$$
+\begin{align}
+  \frac{d}{dx}(x'y)&=\frac{d}{dx}
+    \begin{pmatrix}
+      x_1 &... & x_m
+    \end{pmatrix}
+    \begin{pmatrix}
+      y_1\\
+      ...\\
+      y_m
+    \end{pmatrix}
+    \\
+  &=\frac{d}{dx}\sum_{i=1}^{m}x_i y_i\\
+  &=\begin{pmatrix}
+      \frac{d}{dx_1}\sum_{i=1}^{m}x_i y_i\\
+      ...\\
+      \frac{d}{dx_m}\sum_{i=1}^{m}x_i y_i
+    \end{pmatrix}\\
+  &=\begin{pmatrix}
+      y_1\\
+      ...\\
+      y_m
+    \end{pmatrix}\\
+  &= y
+\end{align}
+$$
+2. [1pts] What is the gradient of $x'x$ with respect to $x$?
+
+Answer:
+$$
+\begin{align}
+  \frac{d}{dx}(x'x)&=\frac{d}{dx}
+    \begin{pmatrix}
+      x_1 &... & x_m
+    \end{pmatrix}
+    \begin{pmatrix}
+      x_1\\
+      ...\\
+      x_m
+    \end{pmatrix}
+    \\
+  &=\frac{d}{dx}\sum_{i=1}^{m}x_i^2\\
+  &=\begin{pmatrix}
+      \frac{d}{dx_1}\sum_{i=1}^{m}x_i^2\\
+      ...\\
+      \frac{d}{dx_m}\sum_{i=1}^{m}x_i^2
+    \end{pmatrix}\\
+  &=\begin{pmatrix}
+      2x_1\\
+      ...\\
+      2x_m
+    \end{pmatrix}\\
+  &= 2x
+\end{align}
+$$
+3. [2pts] What is the Jacobian of $x'A$ with respect to $x$?
+
+Answer:
+$$
+\begin{align}
+  \frac{d}{dx}(x'A)&=\frac{d}{dx}
+    \begin{pmatrix}
+      x_1 &... & x_m
+    \end{pmatrix}
+    \begin{pmatrix}
+      a_{11} & ... & a_{1n}\\
+      ...\\
+      a_{m1} & ... & a_{mn}
+    \end{pmatrix}
+    \\
+  &=\frac{d}{dx}
+    \begin{pmatrix}
+      \sum_{i=1}^{m}x_i a_{i1} & ... & \sum_{i=1}^{m}x_i a_{in}\\
+    \end{pmatrix}\\
+  &=\frac{d}{dx}
+      \begin{pmatrix}
+        a_{11}x_1+...a_{m1}x_m\\
+        ...\\
+        a_{1n}x_1+...a_{mn}x_m
+      \end{pmatrix}\\
+  &=  \begin{pmatrix}
+        a_{11} & ... & a_{m1}\\
+        ...\\
+        a_{1n} & ... & a_{mn}
+      \end{pmatrix}\\
+  &=A'
+\end{align}
+$$
+4. [2pts] What is the gradient of $x'Bx$ with respect to $x$?
+
+Answer:
+$$
+\begin{align}
+  \frac{d}{dx}(x'Bx)&=\frac{d}{dx}
+    \begin{pmatrix}
+      x_1 &... & x_m
+    \end{pmatrix}
+    \begin{pmatrix}
+          b_{11} & ... & b_{1m}\\
+          ...\\
+          b_{n1} & ... & b_{mm}
+    \end{pmatrix}
+    \begin{pmatrix}
+      x_1\\
+      ...\\
+      x_m
+    \end{pmatrix}\\
+  &=\frac{d}{dx}
+    \begin{pmatrix}
+        \sum_{i=1}^{m}b_{i1}x_i & ... & \sum_{i=1}^{m}b_{im}x_i
+    \end{pmatrix}
+    \begin{pmatrix}
+      x_1\\
+      ...\\
+      x_m
+    \end{pmatrix}\\
+  &=\frac{d}{dx}\sum_j^m{x_j} \sum_i^m{b_{ij}x_i}\\
+  &=\frac{d}{dx}\sum_{i,j}^m{x_i x_j b_{ij}}\\
+  &=\frac{d}{dx}(\sum_i^m{b_{ii}x_i^2} + \sum_{j=1}^m\sum_{i\neq j}^m{b_{ij}x_i x_j})\\
+  &=\begin{pmatrix}
+      \frac{d}{dx_1}(\sum_i^m{b_{ii}x_i^2} + \sum_{j=1}^m\sum_{i\neq j}^m{b_{ij}x_i x_j})\\
+      ...\\
+      \frac{d}{dx_m}(\sum_i^m{b_{ii}x_i^2} + \sum_{j=1}^m\sum_{i\neq j}^m{b_{ij}x_i x_j})
+    \end{pmatrix}\\
+  &=\begin{pmatrix}
+      2x_{1} b_{11} + \sum_{j\neq 1}^m{x_j b_{1j}} + \sum_{j\neq 1}^m{x_j b_{j1}}\\
+      ...\\
+      2x_{m} b_{mm} + 2\sum_{j\neq m}^m{x_j b_{mj}} + \sum_{j\neq m}^m{x_j b_{jm}}
+    \end{pmatrix}\\
+  &=\begin{pmatrix}
+      2b_{11} & b_{12}+b_{21} & ... & b_{1m}+b_{m1}\\
+      ...\\
+      b_{m1}+b_{1m} & b_{m2}+b_{2m} & ... & 2b_{mm}
+    \end{pmatrix}
+    \begin{pmatrix}
+        x_1\\
+        ...\\
+        x_m
+    \end{pmatrix}\\
+  &= (B+B')x
+\end{align}
+$$
+## Automatic Differentiation (AD)
+
+Use one of the accepted AD library (Zygote.jl (julia), JAX (python), PyTorch (python))
+to implement and test your answers above.
+
+### [1pts] Create Toy Data
+
+
+```julia
+# Choose dimensions of toy data
+m = 3
+n = 4
+
+# Make random toy data with correct dimensions
+x = rand(m)
+y = rand(m)
+A = rand(m,n)
+B = rand(m,m)
+```
+[1pts] Test to confirm that the sizes of your data is what you expect:
+```julia
+# Make sure your toy data is the size you expect!
+@testset "Sizes of Toy Data" begin
+  #TODO: confirm sizes for toy data x,y,A,B
+  #hint: use `size` function, which returns tuple of integers.
+  @test size(x) == (m,)
+  @test size(y) == (m,)
+  @test size(A) == (m,n)
+  @test size(B) == (m,m)
+end;
+```
+
+### Automatic Differentiation
+
+1. [1pts] Compute the gradient of $f_1(x) = x'y$ with respect to $x$?
+
+```julia
+# Use AD Tool
+using Zygote: gradient
+# note: `Zygote.gradient` returns a tuple of gradients, one for each argument.
+# if you want just the first element you will need to index into the tuple with [1]
+
+f1(x) = x'y
+df1dx = gradient(f1,x)
+```
+
+2. [1pts] Compute the gradient of $f_2(x) = x'x$ with respect to $x$?
+
+```julia
+f2(x) = x'x
+df2dx = gradient(f2, x)
+```
+
+3. [1pts] Compute the Jacobian of $f_3(x) = x'A$ with respect to $x$?
+
+If you try the usual `gradient` fucntion to compute the whole Jacobian it would give an error.
+You can use the following code to compute the Jacobian instead.
+
+```julia
+function jacobian(f, x)
+    y = f(x)
+    n = length(y)
+    m = length(x)
+    T = eltype(y)
+    j = Array{T, 2}(undef, n, m)
+    for i in 1:n
+        j[i, :] .= gradient(x -> f(x)[i], x)[1]
+    end
+    return j
+end
+```
+
+[2pts] Briefly, explain why `gradient` of $f_3$ is not well defined (hint: what is the dimensionality of the output?) and what the `jacobian` function is doing in terms of calls to `gradient`.
+Specifically, how many calls of `gradient` is required to compute a whole `jacobian` for $f : \mathbb{R}^m \rightarrow \mathbb{R}^n$?
+
+Answer:
+$f: \mathbb{R}^m -> \mathbb{R}^n$ should have a $n\times m$ jacobian matrix, but here
+the output is a $m\times n$ matrix; The jacobian function is essentially calling 'gradient'function to
+take the gradient of each real-valued function $f_i$ and combine them into a jacobian matrix; n calls are requied.
+
+The very important takeaway here is that, with AD, `gradient`s are cheap but full `jacobian`s are expensive.\\
+
+```julia
+f3(x) = x'A
+df3dx = jacobian(f3, x)#: use jacobian
+```
+
+
+
+4. [1pts] Compute the gradient of $f_4(x) = x'Bx$ with respect to $x$?
+
+```julia
+f4(x) = x'*B*x
+df4dx = gradient(f4, x)
+```
+
+
+5. [2pts] Test all your implementations against the manually derived derivatives in previous question
+```julia
+# Test to confirm that AD matches hand-derived gradients
+@testset "AD matches hand-derived gradients" begin
+  @test df1dx == (y,) #rhs from 2.1
+  @test df2dx == (2x,) #rhs from 2.1
+  @test isapprox(df3dx,A')#rhs from 2.1
+  @test isapprox(df4dx[1],(B+B')*x) #rhs from 2.1
+end
+```
