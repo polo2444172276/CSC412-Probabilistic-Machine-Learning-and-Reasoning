@@ -16,6 +16,6 @@ PA1: Basics of decision theory, Gradient-based Model Fitting.
 
 PA2: Bayesian inference in large models with continuous latent variables, stochastic variational inference. Implemented a variant of TrueSkill model.
 
-PA3: Implemented Variational AutoEncoder(VAE) from scratch on binarized MNIST digits.
+PA3: Implemented Variational AutoEncoder(VAE) from scratch on binarized MNIST digits for classification, generation and prediction(of bottom half given top half).
 
 
